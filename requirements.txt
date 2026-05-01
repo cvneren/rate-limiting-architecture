@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+redis>=5.0.0
+pytest
+pytest-asyncio
+httpx
+pydantic-settings
+cachetools
