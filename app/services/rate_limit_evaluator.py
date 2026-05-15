@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Tuple, cast
+from typing import Any, Awaitable, Tuple, cast
 
 from cachetools import TTLCache  # type: ignore
 
@@ -9,7 +9,7 @@ from app.services.redis_pool import redis_manager
 
 # L1 Cache for Fail-Open mechanism (Local Token Bucket)
 # Limit to 10,000 IPs, evict after 60 seconds
-l1_cache = TTLCache(maxsize=10000, ttl=60)
+l1_cache: TTLCache[str, dict] = TTLCache(maxsize=10000, ttl=60)
 
 
 async def evaluate_request(client_id: str) -> Tuple[bool, int, float]:
@@ -27,21 +27,23 @@ async def evaluate_request(client_id: str) -> Tuple[bool, int, float]:
     tau = (settings.RATE_LIMIT_BURST - 1) * t
 
     try:
-        # Use a strict timeout for Redis calls (Step 2.3)
-        async with asyncio.timeout(0.1):  # 100ms timeout
-            redis_client = redis_manager.get_client()
-            if not redis_manager.gcra_sha:
-                # Fallback if script not loaded yet (startup race)
-                await redis_manager.load_scripts()
+        # Use a strict timeout for Redis calls (Python 3.10 compatible)
+        redis_client = redis_manager.get_client()
+        if not redis_manager.gcra_sha:
+            # Fallback if script not loaded yet (startup race)
+            await asyncio.wait_for(redis_manager.load_scripts(), timeout=0.1)
 
-            # Ensure sha is handled as a string for evalsha
-            sha = cast(str, redis_manager.gcra_sha)
-            # Suppress MyPy Union awaitable warning
-            result = await redis_client.evalsha(
-                sha, 1, redis_key, t, tau
-            )  # type: ignore[misc]
-            # result: [is_allowed, remaining, retry_after]
-            return bool(result[0]), int(result[1]), float(result[2])
+        # Ensure sha is handled as a string for evalsha
+        sha = cast(str, redis_manager.gcra_sha)
+
+        # Wrap the evalsha call in wait_for
+        # Cast to Awaitable to satisfy MyPy
+        result = await asyncio.wait_for(
+            cast(Awaitable[Any], redis_client.evalsha(sha, 1, redis_key, t, tau)),
+            timeout=0.1,
+        )
+        # result: [is_allowed, remaining, retry_after]
+        return bool(result[0]), int(result[1]), float(result[2])
 
     except (asyncio.TimeoutError, Exception):
         # Fail-Open: Fallback to L1 Local Cache (Step 2.4)

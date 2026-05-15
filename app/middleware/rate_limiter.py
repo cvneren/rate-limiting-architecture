@@ -15,7 +15,7 @@ class RateLimitMiddleware:
     def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
         self.app = app
         # Blocklist limited to 10,000 entries, max 5 second TTL
-        self.blocklist = TTLCache(maxsize=10000, ttl=5)
+        self.blocklist: TTLCache[str, bool] = TTLCache(maxsize=10000, ttl=5)
 
     async def __call__(
         self,

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 import redis.asyncio as redis
@@ -17,8 +18,19 @@ class RedisPool:
                 settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
+                socket_timeout=2.0,  # Prevent indefinite hangs
+                socket_connect_timeout=2.0,
             )
-            await self.load_scripts()
+            try:
+                # Use a timeout to verify the connection (Python 3.10 compatible)
+                await asyncio.wait_for(self.load_scripts(), timeout=2.0)
+            except (asyncio.TimeoutError, ConnectionError, Exception) as e:
+                import logging
+
+                logging.warning(
+                    f"Failed to connect to Redis during startup: {e}. "
+                    "Falling back to L1 local rate limiting."
+                )
 
     async def load_scripts(self) -> None:
         """Load the GCRA Lua script into Redis and store its SHA1 digest."""
