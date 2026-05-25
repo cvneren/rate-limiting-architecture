@@ -1,9 +1,9 @@
 # Distributed Rate Limiting Middleware (FastAPI + Redis GCRA)
 
-[![CI Status](https://github.com/cvneren/rate-limiting-architecture/actions/workflows/ci.yml/badge.svg)](https://github.com/cvneren/rate-limiting-architecture/actions/workflows)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Redis 7.0+](https://img.shields.io/badge/redis-7.0+-red.svg)](https://redis.io/)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/cvneren/rate-limiting-architecture/ci.yml?style=flat-square)](https://github.com/cvneren/rate-limiting-architecture/actions/workflows)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![Redis 7.0+](https://img.shields.io/badge/redis-7.0+-red.svg?style=flat-square)](https://redis.io/)
 
 A high-performance, production-grade distributed rate limiting solution for FastAPI applications. This implementation leverages the **Generic Cell Rate Algorithm (GCRA)** and atomic **Redis Lua scripting** to ensure systemic stability under high concurrency.
 
